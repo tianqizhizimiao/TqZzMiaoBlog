@@ -6,6 +6,11 @@
     <title>TqZzMiaoのBlog</title>
     <!-- 独立 css 文件：main.html 位于 html/ 下，css 位于 css/ 下 -->
     <link rel="stylesheet" href="../css/main.css" />
+    <!-- markdown 代码高亮主题 -->
+    <link rel="stylesheet" href="../javascripts/lib/highlight-theme.css" />
+    <!-- 第三方库：markdown-it（md 渲染）+ highlight.js（代码高亮）——先于 main.js 加载 -->
+    <script src="../javascripts/lib/markdown-it.min.js"></script>
+    <script src="../javascripts/lib/highlight.min.js"></script>
     <!-- 独立 js 文件：页面逻辑（菜单开合等） -->
     <script src="../javascripts/main.js"></script>
   </head>
@@ -34,6 +39,8 @@
         <div class="content-loading" id="content-loading">
           <span class="loading-spinner"></span>
         </div>
+        <!-- 透明 iframe：.html 内容内嵌用（占满内容区，加载完才显示） -->
+        <iframe class="content-frame" id="content-frame" frameborder="0" allowtransparency="true"></iframe>
       </main>
     </div>
 

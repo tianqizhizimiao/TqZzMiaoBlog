@@ -57,16 +57,73 @@
     node.className = 'content-view';
     node.dataset.path = path;
     if (/\.html?$/i.test(path)) {
+      // html：取 body 内容插入（iframe 内嵌单独在 showContent 处理，这里处理非 iframe 的 html）
       const doc = new DOMParser().parseFromString(text, 'text/html');
       node.innerHTML = doc.body ? doc.body.innerHTML : text;
     } else {
-      const pre = document.createElement('pre');
-      pre.className = 'content-text';
-      pre.textContent = text;
-      node.appendChild(pre);
+      // 其它（.md / .txt）：用 markdown-it 渲染；若库不可用退回纯文本
+      if (window.markdownit) {
+        const md = window.markdownit({ html: true });   // 允许行内 html
+        node.innerHTML = md.render(text);
+        // 代码块高亮（highlight.js 全局注册后高亮）
+        if (window.hljs) {
+          node.querySelectorAll('pre code').forEach((c) => { hljs.highlightElement(c); });
+        }
+        // 给每个代码块加"复制"按钮
+        node.querySelectorAll('pre').forEach((pre) => {
+          attachCopyButton(pre);
+        });
+      } else {
+        const pre = document.createElement('pre');
+        pre.className = 'content-text';
+        pre.textContent = text;
+        node.appendChild(pre);
+      }
     }
-    node.style.display = 'block';
     return node;
+  }
+  // 给代码块 pre 加"复制"按钮：右上角小按钮，点击复制代码文本
+  function attachCopyButton(pre) {
+    if (pre.querySelector('.copy-btn')) return;   // 已加过则不重复
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.title = '复制代码';
+    btn.textContent = '复制';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const code = pre.querySelector('code') || pre;
+      const text = (code.textContent || '').replace(/\n$/, '');
+      copyText(text).then((ok) => {
+        btn.textContent = ok ? '已复制' : '复制失败';
+        btn.classList.toggle('copied', ok);
+        setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  }
+  // 复制文本到剪贴板（优先 navigator.clipboard，失败退回 execCommand）
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => legacyCopy(text));
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+  function legacyCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
   }
   // 预渲染深度上限：只预渲染前两层（根目录项 depth=1、第一层项 depth=2），更深层懒加载
   const PRERENDER_DEPTH = 2;
@@ -95,12 +152,30 @@
     const area = getContentArea();
     if (!area) return;
     const loading = document.getElementById('content-loading');
-    // 显示加载动画、隐藏之前内容
-    if (loading) loading.style.display = 'flex';
+    const frame = document.getElementById('content-frame');
+    const isHtml = /\.html?$/i.test(path);
+    // 隐藏所有渲染内容、隐藏 iframe
     area.querySelectorAll('.content-view').forEach((n) => n.classList.remove('show'));
-    // 继续显示内容（若缓存命中直接显示，否则 fetch 加载）
+    if (frame) frame.style.display = 'none';
+
+    if (isHtml) {
+      // .html：进透明 iframe。显示加载动画 → 设 src → onload 后显示
+      if (loading) loading.style.display = 'flex';
+      frame.src = path;                     // 触发加载
+      frame.onload = () => {
+        if (loading) loading.style.display = 'none';
+        frame.style.display = 'block';      // 加载完成才显示
+      };
+      currentPath = path;
+      setBreadcrumb(path);
+      highlightNav(path);
+      return;
+    }
+
+    // 非 .html：显示加载动画，fetch + markdown 渲染进 .content-view
+    if (loading) loading.style.display = 'flex';
     const done = (node) => {
-      if (loading) loading.style.display = 'none';   // 加载完成：隐藏动画
+      if (loading) loading.style.display = 'none';
       area.querySelectorAll('.content-view').forEach((n) => n.classList.remove('show'));
       node.classList.add('show');
     };
@@ -122,6 +197,25 @@
     currentPath = path;
     setBreadcrumb(path);
     highlightNav(path);
+  }
+
+  // 显示"未设置初始页面"提示：初始页面不可在子文件夹中
+  function showNoHomePage() {
+    const area = getContentArea();
+    if (!area) return;
+    const loading = document.getElementById('content-loading');
+    const frame = document.getElementById('content-frame');
+    area.querySelectorAll('.content-view').forEach((n) => n.classList.remove('show'));
+    if (loading) loading.style.display = 'none';   // 隐藏加载动画
+    if (frame) frame.style.display = 'none';
+    // 清掉之前的内容，写入提示
+    area.querySelectorAll('.content-view').forEach((n) => n.remove());
+    const box = document.createElement('div');
+    box.className = 'content-view no-home';
+    box.innerHTML = '<div class="no-home-main">未设置初始页面</div>' +
+                    '<div class="no-home-sub">初始页面不可在子文件夹中喵</div>';
+    area.appendChild(box);
+    box.classList.add('show');
   }
 
   // 自定义刷新：只重载当前显示内容（清缓存 + 重新 showContent，不整页 reload）
@@ -389,6 +483,10 @@
     if (tree) { renderTree('', tree); scanMarquee(); }
     const home = mainPage[''];
     if (home) { showContent(home.path); applyCurrentState(); }
+    else {
+      // 根目录未设主页面：显示"未设置初始页面"提示（初始页面不可在子文件夹中）
+      showNoHomePage();
+    }
     if (window.init && window.init.complete) window.init.complete('menu');
   }
   if (document.readyState === 'loading') {

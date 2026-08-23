@@ -1,5 +1,6 @@
 /* main.css —— 业务主干 main.html 的独立样式。
-   被 main.html 在 <head> 里 <link> 引用（注入外层时由 init_main.js 一并注入）。 */
+   被 main.html 在 <head> 里 <link> 引用（注入外层时由 init_main.js 一并注入）。
+   颜色一律用 var(--xx) 引用，统一在 global.css 的 :root 定义。 */
 
 /* 背景透明，透出底层(背景图/磨砂/主题罩) */
 html, body {
@@ -14,8 +15,8 @@ html, body {
   inset: 0;
   display: flex;
   flex-direction: column;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text, #333);
+  font-family: var(--font-sans);
+  color: var(--text);
   text-align: left; /* 覆盖外层 #main-container 继承的居中，避免内容居中 */
 }
 
@@ -25,7 +26,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 2rem;
-  border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  border-bottom: 1px solid var(--topbar-border);   /* 纯白底线 */
 }
 
 /* 左上角：标题 + 面包屑（同一行），整体可点击展开完整菜单 */
@@ -38,14 +39,14 @@ html, body {
   min-width: 0;              /* 允许面包屑收缩 */
 }
 .brand-wrap:hover .brand {
-  color: var(--accent, #a5b4fc);
+  color: var(--accent);
 }
 
 .brand {
-  font-family: var(--font-display, var(--font-sans));
+  font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text, #333);
+  color: var(--text);
   transition: color 0.2s ease;
   flex-shrink: 0;            /* 大标题不收缩 */
 }
@@ -53,7 +54,7 @@ html, body {
 /* 面包屑路径：紧跟大标题同行，暗灰、稍小 */
 .breadcrumb {
   font-size: 0.95rem;
-  color: var(--muted, #888);
+  color: var(--muted);
   margin-left: 0.4rem;
   white-space: nowrap;
   overflow: hidden;
@@ -67,19 +68,19 @@ html, body {
 }
 
 .nav a {
-  color: var(--muted, #666);
+  color: var(--muted);
   text-decoration: none;
   font-size: 0.95rem;
   transition: color 0.2s ease;
 }
 
 .nav a:hover {
-  color: var(--text, #333);
+  color: var(--text);
 }
 
 /* 右上角导航：当前选中项高亮 */
 .nav .nav-item.active {
-  color: var(--accent, #a5b4fc);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -89,9 +90,38 @@ html, body {
   display: block;                /* 块级文档流，不再居中 */
   width: 100%;
   box-sizing: border-box;
-  padding: 2.5rem 3rem;          /* 四周留白 */
+  padding: 2.5rem 3rem;          /* markdown 内容留白 */
   text-align: left;              /* 左对齐 */
-  overflow: hidden;              /* 禁止业务区上下滚动 */
+  overflow-y: auto;              /* 内容超出时允许垂直滚动，避免正文被裁剪 */
+  overflow-x: hidden;
+  position: relative;            /* 供 .content-frame 定位 */
+}
+
+/* 内容区滚动条：轨道透明，滑块做成深灰色圆角方块，保留滚动功能 */
+.content {
+  scrollbar-width: thin;                              /* Firefox：细滚动条 */
+  scrollbar-color: var(--scrollbar-thumb) transparent;   /* 滑块深灰 / 轨道透明 */
+}
+.content::-webkit-scrollbar {
+  width: 10px;              /* 滚动条宽度（与原本对齐） */
+}
+.content::-webkit-scrollbar-track {
+  background: transparent;  /* 轨道：透明，不显示背景块 */
+}
+.content::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);   /* 滑块：深灰色 */
+  border-radius: 5px;       /* 圆角方块，宽 10px 对齐原本大小 */
+}
+
+/* 透明 iframe：占满内容区（.content 顶栏以下），默认隐藏，.html 加载后显示 */
+.content-frame {
+  display: none;              /* 默认隐藏，加载完再显示 */
+  position: absolute;         /* 相对 .content 填满，不超出屏幕 */
+  inset: 0;                   /* 上下左右贴到 .content 边缘（覆盖 padding 区） */
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
 }
 
 /* 加载动画容器：铺满内容区、居中 */
@@ -106,8 +136,8 @@ html, body {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border, rgba(255,255,255,0.2));
-  border-top-color: var(--accent, #a5b4fc);
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
@@ -121,6 +151,91 @@ html, body {
   margin-left: 0;
   margin-right: auto;
   text-align: left;
+}
+
+/* markdown 渲染内容（.content-view 内）：排版 */
+.content-view {
+  line-height: 1.75;
+  color: var(--text);
+}
+/* 未设置初始页面提示：主文字 + 下方小字，居中 */
+.no-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+}
+.no-home-main {
+  font-size: 1.6rem;
+  color: var(--text);
+}
+.no-home-sub {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.content-view h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+.content-view h2 { font-size: 1.5rem; }
+.content-view h3 { font-size: 1.2rem; }
+.content-view p { margin: 1rem 0; }
+.content-view ul, .content-view ol { padding-left: 1.5rem; }
+.content-view li { margin: .3rem 0; }
+.content-view blockquote {
+  margin: 1rem 0; padding: .6rem 1rem;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+}
+.content-view a { color: var(--accent); }
+.content-view img { max-width: 100%; }
+.content-view table { border-collapse: collapse; width: 100%; }
+.content-view th, .content-view td { border: 1px solid var(--border); padding: .4rem .6rem; }
+.content-view code:not(pre code) {
+  background: var(--surface);
+  padding: .15em .4em; border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: .9em;
+}
+.content-view pre {
+  background: var(--code-block-bg);                /* 代码块：不透明深灰背景 */
+  padding: 1rem; border-radius: 6px; overflow-x: auto;
+  font-family: var(--font-mono);
+  position: relative;              /* 供复制按钮绝对定位 */
+  border: 2px solid var(--code-block-border);   /* 白色细线条边框 */
+}
+/* 代码块：允许选中复制（覆盖全局禁用选择） */
+.content-view pre,
+.content-view pre code {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+/* 去掉 code.hljs 的默认背景(#282c34)和内边距：透出 pre 单一不透明底色，消除双重黑块 */
+.content-view pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+/* 复制按钮：代码块右上角（保留边框；点击后仅改文字，颜色不变） */
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--btn-text);
+  background: var(--code-block-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.copy-btn:hover {
+  opacity: 1;
+  color: var(--btn-text-hover);
 }
 
 /* ---------- 汉堡按钮（默认隐藏，移动端显示） ---------- */
@@ -141,7 +256,7 @@ html, body {
   display: block;
   height: 2px;
   width: 100%;
-  background: var(--text, #333);
+  background: var(--text);
   border-radius: 2px;
 }
 
@@ -149,7 +264,7 @@ html, body {
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--overlay);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -164,8 +279,8 @@ html, body {
   bottom: 0;
   width: 78%;
   max-width: 320px;
-  background: var(--ctrl-gray, #2b2b2b); /* 菜单背景：灰色 */
-  color: var(--text, #333);
+  background: var(--ctrl-gray); /* 菜单背景：灰色 */
+  color: var(--text);
   text-align: left;             /* 覆盖外层居中的继承，注册表样式靠左 */
   transform: translateX(-100%);  /* 默认藏到左侧外 */
   transition: transform 0.3s ease;
@@ -174,8 +289,8 @@ html, body {
   flex-direction: column;
   /* 右侧圆角 + 柔和层次阴影，让抽屉从界面"浮出"，不再硬贴 */
   border-radius: 0 14px 14px 0;
-  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35),
-              1px 0 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 4px 0 18px var(--drawer-shadow-1),
+              1px 0 6px var(--drawer-shadow-2);
   overflow: hidden; /* 让子元素背景被裁剪到圆角内，选中首项时圆角不丢 */
 }
 /* 菜单树：占满标题栏下方剩余空间，内容超出时垂直滚动（隐藏滑块） */
@@ -202,13 +317,13 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0.9rem 1rem 0.6rem;
-  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--headbar-border);
   margin-bottom: 0.3rem;
 }
 .drawer-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text, #fff);
+  color: var(--text);
 }
 /* 标题栏：标题 + 定位图标靠左，关闭图标靠右（仅图标简约） */
 .drawer-title-group {
@@ -220,7 +335,7 @@ html, body {
   border: none;
   background: transparent;
   padding: 0.2rem 0.3rem;
-  color: var(--muted, #999);
+  color: var(--muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -228,7 +343,7 @@ html, body {
   transition: color 0.2s ease;
 }
 .drawer-icon:hover {
-  color: var(--text, #fff);
+  color: var(--text);
 }
 
 /* 菜单树：简约文本风格（参考 Windows 资源管理器），无边框/无块背景，靠缩进+箭头体现层级 */
@@ -239,18 +354,18 @@ html, body {
   cursor: pointer;
   text-align: left;
   /* 项目之间：超细淡线 */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--divider);
 }
 .group-arrow {
   display: inline-block;
   width: 1.2rem;
-  color: var(--muted, #666);
+  color: var(--muted);
   font-size: 0.8rem;
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 .group-title {
-  color: var(--muted, #666);
+  color: var(--muted);
   font-size: 0.9rem;
   white-space: nowrap;      /* 不换行 */
   overflow-x: auto;         /* 超长横向滚动 */
@@ -290,7 +405,7 @@ html, body {
   100% { transform: translateX(-50%); }  /* 双副本无缝往回滚（向左循环） */
 }
 .drawer-group.expanded .group-title {
-  color: var(--text, #fff);
+  color: var(--text);
 }
 
 /* 分组内容区：max-height 过渡（JS 用内联 maxHeight 控制展开/收起，
@@ -299,7 +414,7 @@ html, body {
   overflow: hidden;
   transition: max-height 0.4s ease;
   /* PyCharm 风格缩进引导线：子层左侧画垂直竖线 */
-  border-left: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-left: 1px solid var(--border);
   margin-left: 0.7rem;
   padding-left: 1.1rem;   /* 子项名字比父文件夹名字更靠后（体现层级，缩进不含箭头） */
 }
@@ -310,39 +425,49 @@ html, body {
   align-items: center;
   text-align: left;
   padding: 0.45rem 0.75rem;
-  color: var(--muted, #666);
+  color: var(--muted);
   text-decoration: none;
   font-size: 0.9rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--divider);
   white-space: nowrap;      /* 不换行 */
   overflow-x: auto;         /* 超长横向滚动 */
   scrollbar-width: none;    /* 隐藏滚动条 */
   transition: color 0.2s ease;
 }
 .drawer-item:hover {
-  color: var(--text, #fff);
+  color: var(--text);
 }
 /* 当前页面高亮 */
 .drawer-item.active {
-  color: var(--text, #fff);
-  background: rgba(255, 255, 255, 0.08);
-  border-left: 2px solid var(--accent, #a5b4fc);
+  color: var(--text);
+  background: var(--item-active-bg);
+  border-left: 2px solid var(--accent);
 }
 
-/* 内容区切换：显示的 content-view 0.2s 淡入 */
+/* 内容区切换：
+   隐藏的 .content-view 用 display:none 彻底移出文档流，不占高度（否则空一大片）；
+   显示的 .show 用 display:block，并用 animation 做淡入（display:none→block 无法用 transition）。 */
 .content-view {
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  display: none;
 }
 .content-view.show {
-  opacity: 1;
+  display: block;
+  animation: content-in 0.2s ease;
+}
+/* .no-home 需要 flex 来居中提示文字；特异性高于 .content-view.show，避免被覆盖成 block */
+.content-view.no-home.show {
+  display: flex;
+}
+@keyframes content-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* 纯文本内容渲染（md / txt 等） */
 .content-text {
   white-space: pre-wrap;
-  font-family: var(--font-mono, monospace);
-  color: var(--text, #eee);
+  font-family: var(--font-mono);
+  color: var(--text);
   line-height: 1.6;
   max-width: 70ch;
   background: transparent;   /* 透明背景 */
@@ -350,8 +475,9 @@ html, body {
   padding: 0;
 }
 
-/* 加载进内容区的任意内容：背景强制透明（避免嵌入内容自带黑底/色块） */
-.content, .content * {
+/* 加载进内容区的普通内容：背景强制透明（避免嵌入内容自带黑底/色块）。
+   但代码块 <pre> 和复制按钮 <button> 例外：它们需要不透明背景。 */
+.content, .content *:not(pre):not(pre *):not(.copy-btn) {
   background: transparent !important;
 }
 

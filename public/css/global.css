@@ -31,6 +31,21 @@
   --hero-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); /* 标题阴影 */
   --ctrl-gray: #2b2b2b; /* 菜单/控件背景（灰色） */
 
+  /* ========== 组件色（统一集中管理，其它文件不再写死颜色） ========== */
+  --scrollbar-thumb: #3a3a3a;               /* 内容区滚动条滑块 */
+  --code-block-bg: #1e1e1e;                 /* 代码块背景 */
+  --code-block-border: rgba(255, 255, 255, 0.3);  /* 代码块白色细边框 */
+  --btn-text: #9c9c9c;                      /* 复制按钮文字 */
+  --btn-text-hover: #ffffff;                /* 复制按钮 hover 文字 */
+  --btn-border: rgba(255, 255, 255, 0.12);  /* 复制按钮边框 */
+  --topbar-border: rgba(255, 255, 255, 0.5);    /* 顶栏底线 */
+  --headbar-border: rgba(255, 255, 255, 0.1);   /* 菜单标题栏底线 */
+  --divider: rgba(255, 255, 255, 0.04);     /* 菜单项/分组超细分隔线 */
+  --item-active-bg: rgba(255, 255, 255, 0.08);  /* 菜单当前项背景 */
+  --overlay: rgba(0, 0, 0, 0.4);            /* 抽屉遮罩 */
+  --drawer-shadow-1: rgba(0, 0, 0, 0.35);   /* 抽屉阴影（外） */
+  --drawer-shadow-2: rgba(0, 0, 0, 0.2);    /* 抽屉阴影（内） */
+
   /* 尺寸 / 字体 */
   --radius: 8px;
   --maxw: 680px;
