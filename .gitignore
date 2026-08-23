@@ -1,0 +1,18 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# IDE
+.idea/
+.vscode/
+
+# 旧版本备份（不开源，保留在本地）
+versions/
+
+# 临时/缓存
+__pycache__/
+*.pyc
+.thumbs/
+
+# 环境
+.env

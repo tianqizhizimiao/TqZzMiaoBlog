@@ -1,0 +1,377 @@
+/* main.css —— 业务主干 main.html 的独立样式。
+   被 main.html 在 <head> 里 <link> 引用（注入外层时由 init_main.js 一并注入）。 */
+
+/* 背景透明，透出底层(背景图/磨砂/主题罩) */
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+}
+
+/* 主壳：全屏纵向布局 */
+.main-shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text, #333);
+  text-align: left; /* 覆盖外层 #main-container 继承的居中，避免内容居中 */
+}
+
+/* 顶部菜单栏：标题靠左，选项靠右。PC 端保持原有样式（透明，浮于背景之上） */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+}
+
+/* 左上角：标题 + 面包屑（同一行），整体可点击展开完整菜单 */
+.brand-wrap {
+  display: flex;
+  flex-direction: row;       /* 与标题同一行 */
+  align-items: baseline;     /* 基线对齐 */
+  cursor: pointer;
+  user-select: none;
+  min-width: 0;              /* 允许面包屑收缩 */
+}
+.brand-wrap:hover .brand {
+  color: var(--accent, #a5b4fc);
+}
+
+.brand {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text, #333);
+  transition: color 0.2s ease;
+  flex-shrink: 0;            /* 大标题不收缩 */
+}
+
+/* 面包屑路径：紧跟大标题同行，暗灰、稍小 */
+.breadcrumb {
+  font-size: 0.95rem;
+  color: var(--muted, #888);
+  margin-left: 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.2s ease;
+}
+
+.nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav a {
+  color: var(--muted, #666);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.nav a:hover {
+  color: var(--text, #333);
+}
+
+/* 右上角导航：当前选中项高亮 */
+.nav .nav-item.active {
+  color: var(--accent, #a5b4fc);
+  font-weight: 600;
+}
+
+/* 内容区：文档流，铺满菜单以下整个区域（顶栏之下到页面底部） */
+.content {
+  flex: 1;
+  display: block;                /* 块级文档流，不再居中 */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2.5rem 3rem;          /* 四周留白 */
+  text-align: left;              /* 左对齐 */
+  overflow: hidden;              /* 禁止业务区上下滚动 */
+}
+
+/* 加载动画容器：铺满内容区、居中 */
+.content-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+/* 转圈 spinner：居中显示加载中 */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border, rgba(255,255,255,0.2));
+  border-top-color: var(--accent, #a5b4fc);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+/* 内容区内部文本段落默认 */
+.content h1, .content h2, .content h3,
+.content p, .content pre {
+  max-width: 80ch;
+  margin-left: 0;
+  margin-right: auto;
+  text-align: left;
+}
+
+/* ---------- 汉堡按钮（默认隐藏，移动端显示） ---------- */
+.hamburger {
+  display: none;                 /* PC 隐藏 */
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 30px;
+  height: 30px;
+  margin-right: 0.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.hamburger span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--text, #333);
+  border-radius: 2px;
+}
+
+/* ---------- 移动端遮罩 ---------- */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 20;
+}
+
+/* ---------- 侧边抽屉（左侧滑出） ---------- */
+.drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 78%;
+  max-width: 320px;
+  background: var(--ctrl-gray, #2b2b2b); /* 菜单背景：灰色 */
+  color: var(--text, #333);
+  text-align: left;             /* 覆盖外层居中的继承，注册表样式靠左 */
+  transform: translateX(-100%);  /* 默认藏到左侧外 */
+  transition: transform 0.3s ease;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  /* 右侧圆角 + 柔和层次阴影，让抽屉从界面"浮出"，不再硬贴 */
+  border-radius: 0 14px 14px 0;
+  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35),
+              1px 0 6px rgba(0, 0, 0, 0.2);
+  overflow: hidden; /* 让子元素背景被裁剪到圆角内，选中首项时圆角不丢 */
+}
+/* 菜单树：占满标题栏下方剩余空间，内容超出时垂直滚动（隐藏滑块） */
+#menu-tree {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;   /* 隐藏滑块 */
+  padding-bottom: 18vh;    /* 滚动到底时底部明显留白 */
+}
+#menu-tree::-webkit-scrollbar {
+  display: none;
+}
+/* 定位（追踪）时：临时禁用所有过渡，让布局立刻到最终态，保证 rect 精确、无中间态偏移 */
+.locating #menu-tree {
+  transition: none !important;
+}
+.locating #menu-tree * {
+  transition: none !important;
+}
+/* 菜单标题栏：标题 + 右侧收展全部按钮 */
+.drawer-headbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem 0.6rem;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  margin-bottom: 0.3rem;
+}
+.drawer-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text, #fff);
+}
+/* 标题栏：标题 + 定位图标靠左，关闭图标靠右（仅图标简约） */
+.drawer-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.drawer-icon {
+  border: none;
+  background: transparent;
+  padding: 0.2rem 0.3rem;
+  color: var(--muted, #999);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+.drawer-icon:hover {
+  color: var(--text, #fff);
+}
+
+/* 菜单树：简约文本风格（参考 Windows 资源管理器），无边框/无块背景，靠缩进+箭头体现层级 */
+.drawer-group-head {
+  display: flex;
+  align-items: center;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  /* 项目之间：超细淡线 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.group-arrow {
+  display: inline-block;
+  width: 1.2rem;
+  color: var(--muted, #666);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.group-title {
+  color: var(--muted, #666);
+  font-size: 0.9rem;
+  white-space: nowrap;      /* 不换行 */
+  overflow-x: auto;         /* 超长横向滚动 */
+  scrollbar-width: none;    /* 隐藏滚动条 */
+}
+/* 隐藏横向滚动条滑块（但保留滚动功能） */
+.group-title::-webkit-scrollbar,
+.drawer-item::-webkit-scrollbar {
+  display: none;
+}
+
+/* 跑马灯：超长文本自动向右循环滚动（类似电子横幅）。
+   由 JS 检测超长后给元素加 .marquee，触发这里的动画。 */
+.marquee-text {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+/* 跑马灯容器：隐藏溢出，内容由 .marquee-text 动画向左循环滚动 */
+.marquee {
+  overflow: hidden;
+}
+/* 默认不滚（无动画，settle 在 translateX 0）；加 .running（父文件夹展开时）才滚 */
+.marquee > .marquee-text {
+  /* 间隔由 JS 加的双副本文本自带 4 空格提供，无需 padding */
+  animation: none;      /* 默认不滚 */
+}
+/* 父文件夹展开时（JS 加 .running）：播放跑马灯，0.5s 延迟 */
+.marquee.running > .marquee-text,
+.drawer-item.running .marquee-text,
+.group-title.running .marquee-text {
+  animation: marquee-right 10s linear infinite;
+  animation-delay: 0.5s;
+}
+@keyframes marquee-right {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }  /* 双副本无缝往回滚（向左循环） */
+}
+.drawer-group.expanded .group-title {
+  color: var(--text, #fff);
+}
+
+/* 分组内容区：max-height 过渡（JS 用内联 maxHeight 控制展开/收起，
+   transition 让展开和收起都有 0.4s 平滑动画） */
+.drawer-group-body {
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  /* PyCharm 风格缩进引导线：子层左侧画垂直竖线 */
+  border-left: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  margin-left: 0.7rem;
+  padding-left: 1.1rem;   /* 子项名字比父文件夹名字更靠后（体现层级，缩进不含箭头） */
+}
+
+/* 文件项：纯文本名；超长不换行，改为横向滚动 */
+.drawer-item {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  color: var(--muted, #666);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;      /* 不换行 */
+  overflow-x: auto;         /* 超长横向滚动 */
+  scrollbar-width: none;    /* 隐藏滚动条 */
+  transition: color 0.2s ease;
+}
+.drawer-item:hover {
+  color: var(--text, #fff);
+}
+/* 当前页面高亮 */
+.drawer-item.active {
+  color: var(--text, #fff);
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 2px solid var(--accent, #a5b4fc);
+}
+
+/* 内容区切换：显示的 content-view 0.2s 淡入 */
+.content-view {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.content-view.show {
+  opacity: 1;
+}
+
+/* 纯文本内容渲染（md / txt 等） */
+.content-text {
+  white-space: pre-wrap;
+  font-family: var(--font-mono, monospace);
+  color: var(--text, #eee);
+  line-height: 1.6;
+  max-width: 70ch;
+  background: transparent;   /* 透明背景 */
+  border: none;
+  padding: 0;
+}
+
+/* 加载进内容区的任意内容：背景强制透明（避免嵌入内容自带黑底/色块） */
+.content, .content * {
+  background: transparent !important;
+}
+
+/* 打开状态 */
+.menu-open .drawer-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+.menu-open .drawer {
+  transform: translateX(0);
+}
+
+/* ---------- 移动端（竖屏）调整 ---------- */
+@media (max-aspect-ratio: 1/1) {
+  .hamburger { display: flex; }      /* 移动端显示汉堡 */
+  .topbar .nav { display: none; }    /* 顶栏隐藏右侧选项（移到抽屉） */
+  /* 移动端：标题按原设置（左对齐），隐藏面包屑路径 */
+  .brand-wrap {
+    flex-direction: row;
+    align-items: baseline;
+  }
+  .breadcrumb { display: none; }     /* 移动端隐藏路径 */
+}
